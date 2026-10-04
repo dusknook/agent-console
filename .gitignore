@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════
+#  Agent Console + Video Pipeline · .gitignore
+#  原则：只收「源与文档」，不收「产物、日志、运行时数据、密钥」。
+#  仓库是 Public，任何一条漏网都是不可撤回的。
+# ═══════════════════════════════════════════════════════════════
+
+# ── 工作台内部目录：会话记忆 / 用户画像（绝不外发）──────────────
+.workbuddy/
+
+# ── 本地密钥（绝不提交）─────────────────────────────────────────
+.gh-token
+.env
+.env.*
+
+# ── 运行时数据库（含 audit / approvals / actions 运行时数据）─────
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ── 运行产物：由 run-tests.sh / acceptance.mjs / agent-trial.mjs 生成 ──
+.acceptance.txt
+.agent-trial.txt
+.fp.json
+.suite-out.*
+.testlog*.txt
+.tmp-run.log
+.tests-summary.json
+
+# ── 编辑备份 / 中断残留 ────────────────────────────────────────
+*.bak-*
+# 注：_backup_剧本_v1.md 是剧本历史，保留。
+
+# ── 依赖 ──────────────────────────────────────────────────────
+node_modules/
+
+# ── 视频渲染中间产物（体积大且 100% 可复现）────────────────────
+video/out/frames/
+video/out/frames-*/
+video/out/check/
+video/out/probes-archive/
+video/out/*.mp4
+video/assets/bgm.wav
+
+# ── 素材预处理的抓取中间数据（原始 JSON，非项目源）──────────────
+video/assets/raw/gh/_blob.json
+video/assets/raw/gh/tree_whale.json
+video/assets/raw/gh/_curl_list.txt
+
+# ── 工具描述文件（WorkBuddy 专用，非项目内容）──────────────────
+.wbapp_*.genie
+
+# ── 平台杂项 ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

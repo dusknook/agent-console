@@ -1,0 +1,98 @@
+{
+  "_note": "agent 手握 approval_id 后的 O(1) 查询路径。注意 requires 随状态变：还挂着时是 human（谁说了算在人），裁决后转 auto。next_step 是结构化字段，不是散文。",
+  "_volatile": {
+    "note": "本响应含「运行态字段」（见下面 fields）：它们随服务运行状态变化，所以上面的 bytes 只是某一次采样的瞬间值，会跟着漂移。核对时请先屏蔽这些路径，再比对语义部分。",
+    "fields": [
+      "_meta.budget.reserved",
+      "_meta.budget.used",
+      "_meta.latency_ms",
+      "_meta.request_id",
+      "_meta.tokens_estimate",
+      "data.created_at"
+    ],
+    "detected_by": {
+      "double-probe": [
+        "_meta.latency_ms",
+        "_meta.request_id"
+      ],
+      "name-pattern": [
+        "_meta.budget.reserved",
+        "_meta.budget.used",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "_meta.tokens_estimate",
+        "data.created_at"
+      ]
+    },
+    "bytes_observed": [
+      1911,
+      1911
+    ],
+    "bytes_note": "bytes 是第 1 次采样的瞬间值。两次采样相同，不等于它不会变 —— 真正的驱动是上面 fields 里的字段（尤其 _meta.budget.reserved/used）：它们一改，整份响应的字节数就跟着改。不要把 bytes 当成可复现的事实去核对。"
+  },
+  "status": 200,
+  "bytes": 1911,
+  "body": {
+    "ok": true,
+    "requires": "human",
+    "data": {
+      "id": "apr_27213f",
+      "status": "PENDING",
+      "requested_by": "agent",
+      "created_at": "2026-10-03 21:58:04",
+      "request": {
+        "method": "POST",
+        "route": "/v1/act/:id/confirm",
+        "params": {
+          "id": "act_e57d55"
+        },
+        "body": {},
+        "idempotency_key": null
+      },
+      "fingerprint": "51ec7e4c60b59b74ac9936f1d979d31e",
+      "fingerprint_note": "sha256(method␀route␀params␀body) 前 32 位 —— 不含幂等键、也不含 approval_ttl_s：键和寿命都改不了「这是哪件事」",
+      "hits": 0,
+      "expires_at": null,
+      "ttl_s": null,
+      "ttl_note": "这张单没有 TTL —— 会一直等人裁决，不会自己过期",
+      "decided_by": null,
+      "decided_at": null,
+      "reason": null,
+      "replay": null,
+      "decide_endpoint": "POST /v1/approvals/apr_27213f/decide",
+      "pending": true,
+      "who_can_advance": "human",
+      "next_step": {
+        "human": "POST /v1/approvals/apr_27213f/decide {decision: approve|reject}",
+        "agent": "wait —— 可见性不构成权限，重发原请求不会推进它"
+      }
+    },
+    "hints": [
+      {
+        "for": "agent",
+        "action": "wait_for_human",
+        "suggest": "等待人工裁决。不要轮询，也不要重发原请求",
+        "why": "唯一能推进它的动作是人 —— 轮询和重发都只会白烧上下文"
+      },
+      {
+        "for": "user",
+        "action": "decide_approval",
+        "suggest": "批准或驳回 apr_27213f",
+        "why": "这是该端点唯一的执行入口"
+      }
+    ],
+    "_meta": {
+      "request_id": "req_93d55bc8",
+      "latency_ms": 0.52,
+      "tokens_estimate": 248,
+      "tokens_note": "真实响应体的 chars/4 估算，非模拟值",
+      "engine": "node:http + node:sqlite",
+      "gate_enforced_at": "server process",
+      "budget": {
+        "limit": 50,
+        "used": 12.4,
+        "reserved": 0.84
+      }
+    }
+  }
+}

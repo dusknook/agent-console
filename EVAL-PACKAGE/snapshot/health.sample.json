@@ -1,0 +1,151 @@
+{
+  "_note": "自举入口。routes[] 给出全部路由，agent 据此知道这里有什么。",
+  "_volatile": {
+    "note": "本响应含「运行态字段」（见下面 fields）：它们随服务运行状态变化，所以上面的 bytes 只是某一次采样的瞬间值，会跟着漂移。核对时请先屏蔽这些路径，再比对语义部分。",
+    "fields": [
+      "_meta.budget.reserved",
+      "_meta.budget.used",
+      "_meta.latency_ms",
+      "_meta.request_id",
+      "_meta.tokens_estimate",
+      "data.counts.actions",
+      "data.counts.approvals_pending",
+      "data.counts.audit",
+      "data.counts.decisions",
+      "data.counts.leases",
+      "data.counts.open_change_requests",
+      "data.uptime_s"
+    ],
+    "detected_by": {
+      "double-probe": [
+        "_meta.latency_ms",
+        "_meta.request_id"
+      ],
+      "name-pattern": [
+        "_meta.budget.reserved",
+        "_meta.budget.used",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "_meta.tokens_estimate",
+        "data.counts.actions",
+        "data.counts.approvals_pending",
+        "data.counts.audit",
+        "data.counts.decisions",
+        "data.counts.leases",
+        "data.counts.open_change_requests",
+        "data.uptime_s"
+      ]
+    },
+    "bytes_observed": [
+      2977,
+      2978
+    ],
+    "bytes_note": "bytes 是第 1 次采样的瞬间值。两次采样相同，不等于它不会变 —— 真正的驱动是上面 fields 里的字段（尤其 _meta.budget.reserved/used）：它们一改，整份响应的字节数就跟着改。不要把 bytes 当成可复现的事实去核对。"
+  },
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "bytes": 2977,
+  "body": {
+    "ok": true,
+    "requires": "auto",
+    "data": {
+      "service": "agent-console",
+      "version": "v6",
+      "engine": "node:http + node:sqlite",
+      "process_model": "队列、锁、门控由本进程持有 —— agent 无法绕过自己做裁判",
+      "pid": 31848,
+      "port": 8787,
+      "uptime_s": 63,
+      "db_path": "E:\\2026-10-03-16-38-27\\agent-console.sqlite",
+      "db_bytes": 122880,
+      "journal_mode": "wal",
+      "endpoints": 27,
+      "routes": [
+        "GET /v1/health",
+        "GET /v1/openapi.json",
+        "GET /v1/state/bundle",
+        "GET /v1/state/project",
+        "GET /v1/state/decisions",
+        "PUT /v1/state/decisions",
+        "GET /v1/state/checkpoint",
+        "GET /v1/state/assets",
+        "PUT /v1/state/assets",
+        "GET /v1/state/change_requests",
+        "POST /v1/state/change_requests",
+        "POST /v1/state/change_requests/:id/approve",
+        "POST /v1/senses/measure",
+        "POST /v1/senses/transcribe",
+        "POST /v1/senses/judge",
+        "GET /v1/senses/diff",
+        "POST /v1/act/queue",
+        "POST /v1/act/lease",
+        "GET /v1/act/leases",
+        "POST /v1/act/:id/confirm",
+        "POST /v1/act/:id/rollback",
+        "GET /v1/audit",
+        "GET /v1/approvals",
+        "GET /v1/approvals/:id",
+        "POST /v1/approvals/:id/decide",
+        "POST /v1/demo/push_budget",
+        "POST /v1/demo/reset",
+        "POST /v1/act/confirm",
+        "POST /v1/act/rollback"
+      ],
+      "contract": {
+        "openapi": "/v1/openapi.json",
+        "derived_from": "ROUTES × GATE × META（活元数据，不落盘、不手写）",
+        "annotates": [
+          "x-gate",
+          "x-requires",
+          "x-idempotency"
+        ]
+      },
+      "gate": {
+        "policy": [
+          {
+            "route": "POST /v1/act/:id/confirm",
+            "level": "approval",
+            "why": "确认执行 = 产生费用 + 不可逆副作用"
+          },
+          {
+            "route": "POST /v1/act/confirm",
+            "level": "approval",
+            "why": "同上（兼容 body.action_id 形式）"
+          },
+          {
+            "route": "POST /v1/state/change_requests/:id/approve",
+            "level": "approval",
+            "why": "批准变更 = 改写已锁定的决策 / 资产"
+          }
+        ],
+        "human_surface": [
+          "POST /v1/approvals/:id/decide"
+        ],
+        "decide_endpoint": "POST /v1/approvals/:id/decide",
+        "approval_secret_required": false,
+        "model": "gate=授权（你能发起吗） · requires=裁决（结果谁定） · 两者正交"
+      },
+      "counts": {
+        "decisions": 3,
+        "actions": 0,
+        "leases": 0,
+        "audit": 1,
+        "approvals_pending": 0,
+        "open_change_requests": 0
+      }
+    },
+    "_meta": {
+      "request_id": "req_faf8979b",
+      "latency_ms": 0.8,
+      "tokens_estimate": 447,
+      "tokens_note": "真实响应体的 chars/4 估算，非模拟值",
+      "engine": "node:http + node:sqlite",
+      "gate_enforced_at": "server process",
+      "budget": {
+        "limit": 50,
+        "used": 12.4,
+        "reserved": 0
+      }
+    }
+  }
+}

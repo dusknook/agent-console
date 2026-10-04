@@ -1,0 +1,109 @@
+{
+  "base": "http://127.0.0.1:8787",
+  "at": "2026-10-03T10:56:20.075Z",
+  "roundtrips": 19,
+  "tokens_spent": 23320,
+  "checks": [
+    {
+      "name": "T1.1 零知识 agent 在 ≤2 次往返内拿到完整端点清单",
+      "pass": true,
+      "detail": "往返 2 次 / 29 路由"
+    },
+    {
+      "name": "T2.1 入队成功且返回可追踪 id",
+      "pass": true,
+      "detail": "HTTP 201 id=act_54f79a"
+    },
+    {
+      "name": "T2.2 被门控拦下（而不是执行了）",
+      "pass": true,
+      "detail": "HTTP 403"
+    },
+    {
+      "name": "T2.3 拦截响应带机器可枚举的 error.code",
+      "pass": true,
+      "detail": "REQUIRE_APPROVAL"
+    },
+    {
+      "name": "T3.1 存在【不依赖自然语言】的机器可读下一步（hints[].action）",
+      "pass": true,
+      "detail": "hints.action=stop_retry,hints.action=observe,hints.action=decide_approval"
+    },
+    {
+      "name": "T3.2 仅凭 error.code 就能推出「不该重试」（有兜底）",
+      "pass": true,
+      "detail": "error.code=REQUIRE_APPROVAL 可枚举，agent 可硬编码该分支"
+    },
+    {
+      "name": "T3.3 重试不会重复开单（挂起幂等）",
+      "pass": true,
+      "detail": "approval_id 一致"
+    },
+    {
+      "name": "T3.4 重试不会执行副作用（预算未动）",
+      "pass": true,
+      "detail": "HTTP 403"
+    },
+    {
+      "name": "T4.1 可按 id 单查审批单（O(1) 追踪）",
+      "pass": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "T4.2 兜底：列表可自行过滤出目标",
+      "pass": true,
+      "detail": "能，但代价 O(n)"
+    },
+    {
+      "name": "T5.1 spec 不套信封、是纯文档",
+      "pass": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "T5.2 契约声明了门控范围",
+      "pass": true,
+      "detail": "POST_v1_state_change_requests_id_approve, POST_v1_act_id_confirm, POST_v1_act_confirm"
+    },
+    {
+      "name": "T5.3 契约声明全了 403 body 的实际字段（agent 不必靠猜）",
+      "pass": true,
+      "detail": "全部已声明"
+    },
+    {
+      "name": "T5.4 error.code 有 enum，agent 可穷举分支",
+      "pass": true,
+      "detail": "22 个"
+    },
+    {
+      "name": "T5.5 契约声明 hints[].action（机器语义）",
+      "pass": true,
+      "detail": "已声明"
+    },
+    {
+      "name": "T5.6 幂等要求已声明（含缺口不粉饰）",
+      "pass": true,
+      "detail": "required=1 not_enforced=15"
+    },
+    {
+      "name": "T6.1 五种绕过尝试无一穿透",
+      "pass": true,
+      "detail": "5/5 被挡"
+    },
+    {
+      "name": "T6.2 绕过过程中的副作用为零（预算未动）",
+      "pass": true,
+      "detail": "¥12.4 → ¥12.4"
+    },
+    {
+      "name": "T7.1 人批后 agent 查得到结果（无需内幕）",
+      "pass": true,
+      "detail": "action.status=EXECUTED"
+    },
+    {
+      "name": "T7.2 重复裁决被挡（409），不会执行两遍",
+      "pass": true,
+      "detail": "HTTP 409"
+    }
+  ],
+  "findings": []
+}

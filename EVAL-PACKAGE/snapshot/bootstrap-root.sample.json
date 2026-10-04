@@ -1,0 +1,73 @@
+{
+  "_note": "一个零知识 agent 打 GET / 时拿到的。请求带 Accept: */*（与 fetch / curl 的默认值一致）—— 实际发的请求头见 _request_headers。内容协商：只有明确偏好 text/html 才给页面，否则给这份机器可读索引。",
+  "_request_headers": {
+    "accept": "*/*"
+  },
+  "_volatile": {
+    "note": "本响应含「运行态字段」（见下面 fields）：它们随服务运行状态变化，所以上面的 bytes 只是某一次采样的瞬间值，会跟着漂移。核对时请先屏蔽这些路径，再比对语义部分。",
+    "fields": [
+      "_meta.budget.reserved",
+      "_meta.budget.used",
+      "_meta.latency_ms",
+      "_meta.request_id",
+      "_meta.tokens_estimate"
+    ],
+    "detected_by": {
+      "double-probe": [
+        "_meta.latency_ms",
+        "_meta.request_id"
+      ],
+      "name-pattern": [
+        "_meta.budget.reserved",
+        "_meta.budget.used",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "_meta.tokens_estimate"
+      ]
+    },
+    "bytes_observed": [
+      1259,
+      1260
+    ],
+    "bytes_note": "bytes 是第 1 次采样的瞬间值。两次采样相同，不等于它不会变 —— 真正的驱动是上面 fields 里的字段（尤其 _meta.budget.reserved/used）：它们一改，整份响应的字节数就跟着改。不要把 bytes 当成可复现的事实去核对。"
+  },
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "bytes": 1259,
+  "body": {
+    "ok": true,
+    "requires": "auto",
+    "data": {
+      "kind": "agent-index",
+      "service": "agent-console",
+      "version": "v6",
+      "note": "你的 Accept 没偏好 text/html，所以给你机器可读的索引，而不是 82KB 的 HTML。",
+      "contract": {
+        "url": "/v1/openapi.json",
+        "type": "application/openapi+json",
+        "why": "先读它，别读文档：它由运行中的路由表 × 门控策略 × 语义登记现场派生，不会漂移。"
+      },
+      "health": "/v1/health",
+      "bundle": "/v1/state/bundle",
+      "start_here": [
+        "GET /v1/health —— 端点清单与运行态",
+        "GET /v1/openapi.json —— 契约（含 x-gate / x-requires / x-idempotency）",
+        "GET /v1/state/bundle —— 一次拿全状态，省往返"
+      ],
+      "gotcha": "动手前先看 x-gate：被门控的端点直接调会 403，请求会被挂起等人裁决，重试不会让它执行。"
+    },
+    "_meta": {
+      "request_id": "req_1c7f59b4",
+      "latency_ms": 0.1,
+      "tokens_estimate": 136,
+      "tokens_note": "真实响应体的 chars/4 估算，非模拟值",
+      "engine": "node:http + node:sqlite",
+      "gate_enforced_at": "server process",
+      "budget": {
+        "limit": 50,
+        "used": 12.4,
+        "reserved": 0
+      }
+    }
+  }
+}

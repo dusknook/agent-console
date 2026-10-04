@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>this-round</title>
+<style>
+  html,body{margin:0;padding:0;background:#080c11;overflow:hidden}
+  canvas{display:block}
+</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script src="src/assets-data.js"></script>
+<script src="src/scene.js"></script>
+<script>
+(() => {
+  const cv  = document.getElementById('cv');
+  const ctx = cv.getContext('2d', { alpha: false });
+  const W = cv.width, H = cv.height;
+
+  // 探针：headless Chrome 默认落核显，看到 Intel 就是走错了（skill §1）。
+  window.gpuInfo = () => {
+    try {
+      const c = document.createElement('canvas');
+      const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+      if (!gl) return 'no-webgl';
+      const e = gl.getExtension('WEBGL_debug_renderer_info');
+      return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    } catch (e) { return 'n/a: ' + e.message; }
+  };
+
+  // 单帧：t 是秒。永远是 t 的纯函数，所以断点续渲/重跑都得到同一帧（skill 铁律 10）。
+  window.renderAt = (t, type = 'image/jpeg', q = 0.94) => {
+    SCENE.draw(ctx, W, H, +t);
+    return cv.toDataURL(type, q);
+  };
+
+  // 接触表：一次会话渲染 N 个时刻并拼图，用于快速巡检（比渲全片快两个数量级）
+  window.renderSheet = (ts, cols = 3, w = 640) => {
+    const scale = w / W, h = Math.round(H * scale);
+    const rows = Math.ceil(ts.length / cols);
+    const out = document.createElement('canvas');
+    out.width = cols * w; out.height = rows * h;
+    const octx = out.getContext('2d');
+    const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H;
+    const tctx = tmp.getContext('2d', { alpha: false });
+    const ms = [];
+    ts.forEach((t, i) => {
+      const t0 = performance.now();
+      SCENE.draw(tctx, W, H, +t);
+      ms.push(Math.round(performance.now() - t0));
+      const cx = (i % cols) * w, cy = Math.floor(i / cols) * h;
+      octx.drawImage(tmp, cx, cy, w, h);
+      octx.fillStyle = 'rgba(0,0,0,.72)'; octx.fillRect(cx, cy, 132, 30);
+      octx.fillStyle = '#3fb950'; octx.font = '20px monospace';
+      octx.fillText('t=' + (+t).toFixed(2), cx + 8, cy + 21);
+    });
+    return { url: out.toDataURL('image/jpeg', 0.9), ms };
+  };
+
+  // 角色是位图，必须等图全部解码完再置 ready ——
+  // 否则 render.mjs 会在图还没上纹理时就开始逐帧，渲出一批没有角色的空白帧。
+  window.SCENE.whenReady().then(() => {
+    window.SCENE_META = { dur: SCENE.DUR, chapters: SCENE.CHAPTERS.map(c => ({ id: c.id, a: c.a, b: c.b })) };
+    window.ready = true;
+  });
+})();
+</script>
+</body>
+</html>

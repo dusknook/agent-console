@@ -1,0 +1,19 @@
+这是 GET /v1/openapi.json 的响应头。
+注意：文档体里**没有** _meta —— 传输统计放在头里。
+理由：文档的全部价值在于描述那份契约，而契约不随请求变。
+把 request_id / latency 塞进文档体，等于把「可 diff」这个能力白送掉。
+
+access-control-allow-headers: *
+access-control-allow-methods: GET,POST,PUT,DELETE,OPTIONS
+access-control-allow-origin: *
+access-control-expose-headers: *
+access-control-max-age: 86400
+connection: keep-alive
+content-length: 56227
+content-type: application/openapi+json; charset=utf-8
+date: Sat, 03 Oct 2026 13:58:05 GMT
+keep-alive: timeout=5
+x-contract-digest: 6d439cbd7c94bf93
+x-doc-tokens: 6480
+x-latency-ms: 0.91
+x-request-id: req_d14e2863

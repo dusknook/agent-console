@@ -1,0 +1,126 @@
+{
+  "site": "agent-console 评测包",
+  "audience": "agent（第一用户是 AI，评估主体也应该是 AI）",
+  "entry_for_agent": "/start.md",
+  "note": "首选 /start.md（开测版：按产出组织，读完即可开工）。index.html 是人读入口，但也含实质内容（路由表/403 原文/枚举词表），HTML-only 抓取不会空手而归。",
+  "entries": {
+    "/start.md": "开测版（首选）—— 开篇即任务 + 六维可勾选清单 + 输出填空模板",
+    "/pkg.md": "全量纯文本评测包（含契约全文）",
+    "/pkg-lite.md": "精简版（不含契约全文）",
+    "/openapi.json": "完整 OpenAPI 契约（原始字节）",
+    "/prompt.txt": "可粘贴短提示词"
+  },
+  "contract": {
+    "digest": "6d439cbd7c94bf93",
+    "bytes": 56227,
+    "version": "v6",
+    "routes": 29,
+    "gated": [
+      "POST /v1/state/change_requests/{id}/approve",
+      "POST /v1/act/{id}/confirm",
+      "POST /v1/act/confirm"
+    ],
+    "error_code_enum": [
+      "INVALID_JSON",
+      "INVALID_BODY",
+      "IDEMPOTENCY_KEY_REQUIRED",
+      "IDEMPOTENCY_KEY_CONFLICT",
+      "REQUIRE_APPROVAL",
+      "ALREADY_DECIDED",
+      "APPROVAL_NOT_FOUND",
+      "APPROVAL_EXPIRED",
+      "APPROVAL_SECRET_REQUIRED",
+      "ACTION_NOT_FOUND",
+      "ASSET_NOT_FOUND",
+      "DECISION_NOT_FOUND",
+      "CHANGE_REQUEST_NOT_FOUND",
+      "DECISION_LOCKED",
+      "VERSION_IMMUTABLE",
+      "BUDGET_EXCEEDED",
+      "SHARD_LOCKED",
+      "ROUTE_CONFLICT",
+      "ROUTE_GONE",
+      "INVALID_STATE",
+      "UNSUPPORTED_TARGET",
+      "ENDPOINT_NOT_FOUND",
+      "NO_HANDLER",
+      "UI_NOT_FOUND"
+    ],
+    "hint_action_enum": [
+      "stop_retry",
+      "observe",
+      "wait_for_human",
+      "decide_approval",
+      "provide_input",
+      "raise_limit",
+      "retry_with_idempotency_key",
+      "use_alternative",
+      "open_change_request",
+      "claim_lease",
+      "continue_other_shards"
+    ]
+  },
+  "files": [
+    {
+      "path": "/index.html",
+      "bytes": 38790,
+      "what": "人读入口（含摘要、路由表、403 原文）"
+    },
+    {
+      "path": "/start.md",
+      "bytes": 46234,
+      "what": "★★ 开测版：以产出为组织单位（开篇即任务、六维变可勾选清单、模板变填空表）—— <b>首选入口</b>"
+    },
+    {
+      "path": "/pkg.md",
+      "bytes": 129172,
+      "what": "全量纯文本评测包（含契约全文）—— 要完整材料时用"
+    },
+    {
+      "path": "/pkg-lite.md",
+      "bytes": 72118,
+      "what": "精简版（不含契约全文），防抓取被截断"
+    },
+    {
+      "path": "/prompt.txt",
+      "bytes": 2891,
+      "what": "短提示词：只能粘贴文字时用"
+    },
+    {
+      "path": "/openapi.json",
+      "bytes": 56227,
+      "what": "完整 OpenAPI 契约（唯一 schema 是 Envelope）"
+    },
+    {
+      "path": "/files/00_先读我.md",
+      "bytes": 1737,
+      "what": "先读我"
+    },
+    {
+      "path": "/files/01_评测任务书.md",
+      "bytes": 8695,
+      "what": "评测任务书"
+    },
+    {
+      "path": "/files/02_关键证据原文.md",
+      "bytes": 20926,
+      "what": "关键证据原文"
+    },
+    {
+      "path": "/files/03_契约速查表.md",
+      "bytes": 10534,
+      "what": "契约速查表"
+    },
+    {
+      "path": "/files/04_背景简报.md",
+      "bytes": 23862,
+      "what": "背景简报"
+    },
+    {
+      "path": "/files/05_输出模板.md",
+      "bytes": 4175,
+      "what": "输出模板"
+    }
+  ],
+  "regenerate": "node tools/make-doubao-package.mjs && node tools/make-doubao-site.mjs"
+}

@@ -1,0 +1,1791 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Agent Console API",
+    "version": "v6",
+    "summary": "面向 agent 的接口契约：把「我不该」变成「我不能」。",
+    "description": "两条正交的轴，别混：gate（路由策略）＝授权，你**能不能发起**这个动作；\nrequires（响应字段）＝裁决，结果**谁来定**。把判定类接口也门控掉，它就永远无法返回「我判不了」。\n\n于是有 x-gate.level != none 的端点：HTTP 入口在调用 handler 之前就被截停，\n请求原样落盘为审批单，业务代码一行不跑。「绕开队列」在架构上不存在路径 ——\n能跑该 handler 的代码只有一行，在审批回放里。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8787",
+      "description": "本机实例"
+    }
+  ],
+  "tags": [
+    {
+      "name": "基础 INFRA"
+    },
+    {
+      "name": "状态 STATE"
+    },
+    {
+      "name": "感官 SENSES"
+    },
+    {
+      "name": "行动 ACT"
+    },
+    {
+      "name": "审批 APPROVALS"
+    },
+    {
+      "name": "演示 DEMO"
+    }
+  ],
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "GET_v1_health",
+        "tags": [
+          "基础 INFRA"
+        ],
+        "summary": "存活探测 + 契约声明：路由表、门控策略、裁决密钥状态。客户端据此判断是否需要门控，不必靠猜。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "operationId": "GET_v1_openapi_json",
+        "tags": [
+          "基础 INFRA"
+        ],
+        "summary": "本文件。从 ROUTES × GATE × META 现场派生，不落盘、不手写，因此不会与运行中的服务漂移。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/state/bundle": {
+      "get": {
+        "operationId": "GET_v1_state_bundle",
+        "tags": [
+          "基础 INFRA"
+        ],
+        "summary": "一次往返取回整个 UI 所需状态（预算/决策/资产/快照/队列/租约/审计/待批）。给人看的接口，不是给 agent 的。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/state/project": {
+      "get": {
+        "operationId": "GET_v1_state_project",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "项目快照、进度、未决问题。响应固定含 hints[]。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/state/decisions": {
+      "get": {
+        "operationId": "GET_v1_state_decisions",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "immutable 决策记录。agent 读到后不得自行改写。",
+        "parameters": [
+          {
+            "name": "include_superseded",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "传 1 时连历史版本一起返回"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      },
+      "put": {
+        "operationId": "PUT_v1_state_decisions",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "写决策。键已存在且 immutable → 409 DECISION_LOCKED，且响应同时给出 change_request 通路（只堵不疏会让人绕开锁定）。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "key": "scene.pov",
+                "value": "third person, close",
+                "immutable": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/state/checkpoint": {
+      "get": {
+        "operationId": "GET_v1_state_checkpoint",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "断点续跑位置。断点由原子动作完成时自动推进，不依赖人工预定义章节边界。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/state/assets": {
+      "get": {
+        "operationId": "GET_v1_state_assets",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "资产及全部历史版本。旧版本不删除，用于回溯与断点续跑。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      },
+      "put": {
+        "operationId": "PUT_v1_state_assets",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "默认基于当前版本开新版本；显式指定 target_version 改历史版本 → 409 VERSION_IMMUTABLE。锁的是版本，不是资产。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "asset_id": "voice.lead.ref",
+                "value": "female, warm, breathy, mid-30s",
+                "note": "客户要求气声更明显"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/state/change_requests": {
+      "get": {
+        "operationId": "GET_v1_state_change_requests",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "变更请求清单。",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "按状态过滤，如 OPEN"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      },
+      "post": {
+        "operationId": "POST_v1_state_change_requests",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "agent 想改锁定项时的正式入口，返回 approve 端点。通常不必手调：PUT 撞锁时会自动替你开一条。",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "target_type": "decision",
+                "target_id": "DEC-002",
+                "proposed": "female, warm, breathy",
+                "requested_by": "agent"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/state/change_requests/{id}/approve": {
+      "post": {
+        "operationId": "POST_v1_state_change_requests_id_approve",
+        "tags": [
+          "状态 STATE"
+        ],
+        "summary": "人类批准变更：旧记录标 superseded、新记录链上 previous_id（不是原地改写不可变记录）。批准后 requires 从 human 降回 auto。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "REQUIRE_APPROVAL —— 被网关截停，请求已原样落盘为审批单，业务代码一行未执行"
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "human"
+        ],
+        "x-idempotency": "fingerprint_dedup",
+        "x-gate": {
+          "level": "approval",
+          "why": "批准变更 = 改写已锁定的决策 / 资产",
+          "agent_behaviour": "403 REQUIRE_APPROVAL，请求挂起；重试不会让它执行，只会白烧上下文",
+          "execution_entry": "/v1/approvals/{id}/decide（批准时由服务端回放本请求）"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "by": "user"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/senses/measure": {
+      "post": {
+        "operationId": "POST_v1_senses_measure",
+        "tags": [
+          "感官 SENSES"
+        ],
+        "summary": "规则化客观检测。顶层 requires 标明结果谁定：auto 可自行判定，human / llm 必须升级。coverage.not_covered 显式列出判不了的维度。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto",
+          "human"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "artifact": "CH02_final_192k.mp3",
+                "profile": "scribl.v1"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/senses/transcribe": {
+      "post": {
+        "operationId": "POST_v1_senses_transcribe",
+        "tags": [
+          "感官 SENSES"
+        ],
+        "summary": "ASR 转写，返回带时间轴的 segments[]，供 agent 定位问题片段。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "artifact": "CH03_S04.wav",
+                "language": "en-US",
+                "diarize": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/senses/judge": {
+      "post": {
+        "operationId": "POST_v1_senses_judge",
+        "tags": [
+          "感官 SENSES"
+        ],
+        "summary": "语义判定专用端点。判不了的部分显式返回 requires=human_or_llm 并升级，而不是假装能判。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "human_or_llm"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "subject": "CH03_S04",
+                "question": "情绪是否与 CH02 结尾连贯",
+                "kind": "semantic"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/senses/diff": {
+      "get": {
+        "operationId": "GET_v1_senses_diff",
+        "tags": [
+          "感官 SENSES"
+        ],
+        "summary": "只返回变化的字段，unchanged_count 汇总未变项。",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "起始版本，默认 v11"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "目标版本，默认 v12"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/act/queue": {
+      "post": {
+        "operationId": "POST_v1_act_queue",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "入队。Header 必带 Idempotency-Key。route 三选一：auto 直接执行 / approve 挂起等批 / conditional 条件触发。route=auto 带成本 → 422 ROUTE_CONFLICT。",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "写操作必填。同键重发返回首次响应，不产生第二次副作用（约束在存储层 PRIMARY KEY，不在应用层 if）。"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto",
+          "human"
+        ],
+        "x-idempotency": "required",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "kind": "tts.seed_audio",
+                "shard": "CH03_S04",
+                "cost_cny": 0.42,
+                "route": "approve"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/act/lease": {
+      "post": {
+        "operationId": "POST_v1_act_lease",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "分片租约。锁的粒度是原子任务片，不是整个章节。同片被占 → 409 SHARD_LOCKED；不同片可并行。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "shard": "CH03_S04",
+                "holder": "agent-A",
+                "ttl_s": 300
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/act/leases": {
+      "get": {
+        "operationId": "GET_v1_act_leases",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "活跃租约及剩余 TTL（TTL 由服务端时钟仲裁）。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/act/{id}/confirm": {
+      "post": {
+        "operationId": "POST_v1_act_id_confirm",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "把 PENDING_CONFIRMATION 推进为 EXECUTED。此端点被网关门控：agent 直接调只会拿到 403 + 一张待审批单。body 可带 approval_ttl_s 给这张待批单设自过期时间（不带 = 永不过期，等人工）。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "REQUIRE_APPROVAL —— 被网关截停，请求已原样落盘为审批单，业务代码一行未执行"
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "human"
+        ],
+        "x-idempotency": "fingerprint_dedup",
+        "x-gate": {
+          "level": "approval",
+          "why": "确认执行 = 产生费用 + 不可逆副作用",
+          "agent_behaviour": "403 REQUIRE_APPROVAL，请求挂起；重试不会让它执行，只会白烧上下文",
+          "execution_entry": "/v1/approvals/{id}/decide（批准时由服务端回放本请求）"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "action_id": "",
+                "approval_ttl_s": 3600
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/act/{id}/rollback": {
+      "post": {
+        "operationId": "POST_v1_act_id_rollback",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "把已执行动作标为 ROLLED_BACK，退回预算并记录补偿。刻意不上闸门 —— 出错时再设障碍是帮倒忙。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "action_id": ""
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/audit": {
+      "get": {
+        "operationId": "GET_v1_audit",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "actor / verb / target / result / request_id 时间线。",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "返回条数，默认 50，上限 200"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/approvals": {
+      "get": {
+        "operationId": "GET_v1_approvals",
+        "tags": [
+          "审批 APPROVALS"
+        ],
+        "summary": "被网关拦下的请求清单。agent 可读、不可裁决 —— 可见性不构成权限。读取会先扫一遍到期单（到期的转成 EXPIRED）。",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "PENDING / EXECUTED / REJECTED / FAILED / EXPIRED"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/approvals/{id}": {
+      "get": {
+        "operationId": "GET_v1_approvals_id",
+        "tags": [
+          "审批 APPROVALS"
+        ],
+        "summary": "单查一张审批单。agent 手握 approval_id 时的 O(1) 路径 —— 不必拉全表再自己过滤。requires 会随状态变：还挂着时是 human（谁说了算在人），裁决后转 auto。带 TTL 的单给出 expires_at / ttl_s / ttl_note（null = 无 TTL，永不过期）。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "human_or_llm"
+        ],
+        "x-idempotency": "safe",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/approvals/{id}/decide": {
+      "post": {
+        "operationId": "POST_v1_approvals_id_decide",
+        "tags": [
+          "审批 APPROVALS"
+        ],
+        "summary": "门控端点唯一的执行入口。批准时由服务端回放原始请求，agent 因此永远拿不到直接执行的路径。设了 APPROVAL_SECRET 还需带 X-Approval-Secret。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "human"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "x-human-surface": true,
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "decision": "approve",
+                "by": "user"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/demo/push_budget": {
+      "post": {
+        "operationId": "POST_v1_demo_push_budget",
+        "tags": [
+          "演示 DEMO"
+        ],
+        "summary": "演示用：把已用预算推到指定值。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "used": 49.8
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/demo/reset": {
+      "post": {
+        "operationId": "POST_v1_demo_reset",
+        "tags": [
+          "演示 DEMO"
+        ],
+        "summary": "演示用：重置到种子状态。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        }
+      }
+    },
+    "/v1/act/confirm": {
+      "post": {
+        "operationId": "POST_v1_act_confirm",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "（兼容别名）等价于 POST /v1/act/{id}/confirm，动作 id 放在 body 里。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "REQUIRE_APPROVAL —— 被网关截停，请求已原样落盘为审批单，业务代码一行未执行"
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "human"
+        ],
+        "x-idempotency": "fingerprint_dedup",
+        "x-gate": {
+          "level": "approval",
+          "why": "同上（兼容 body.action_id 形式）",
+          "agent_behaviour": "403 REQUIRE_APPROVAL，请求挂起；重试不会让它执行，只会白烧上下文",
+          "execution_entry": "/v1/approvals/{id}/decide（批准时由服务端回放本请求）"
+        },
+        "deprecated": true,
+        "x-alias-of": "POST /v1/act/:id/confirm",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "action_id": "act_xxxxxx"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/act/rollback": {
+      "post": {
+        "operationId": "POST_v1_act_rollback",
+        "tags": [
+          "行动 ACT"
+        ],
+        "summary": "（兼容别名）等价于 POST /v1/act/{id}/rollback，动作 id 放在 body 里。",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "统一信封。业务错误码在 error.code 里，不在这份声明里 —— 声明不出来的东西就不写，免得 spec 撒谎。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        },
+        "x-requires": [
+          "auto"
+        ],
+        "x-idempotency": "optional",
+        "x-gate": {
+          "level": "none"
+        },
+        "deprecated": true,
+        "x-alias-of": "POST /v1/act/:id/rollback",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "action_id": "act_xxxxxx"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Envelope": {
+        "type": "object",
+        "description": "所有操作类响应的统一信封。文档类响应（openapi.json）例外，见 x-agent-console.documents_are_not_operations。",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "requires": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "human",
+              "agent",
+              "human_or_llm"
+            ],
+            "description": "结果谁来定。auto=可自行判定；human=需要人；agent=需要 agent 补充输入。注意：这与门控（gate）是两条正交的轴。"
+          },
+          "replayed": {
+            "type": "boolean",
+            "description": "仅幂等重放时为 true。"
+          },
+          "data": {
+            "type": "object"
+          },
+          "error": {
+            "type": "object",
+            "description": "出错时的结构。code 是可枚举的机器语义，message 是给人读的散文 —— agent 应当只对 code 分支。",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_JSON",
+                  "INVALID_BODY",
+                  "IDEMPOTENCY_KEY_REQUIRED",
+                  "IDEMPOTENCY_KEY_CONFLICT",
+                  "REQUIRE_APPROVAL",
+                  "ALREADY_DECIDED",
+                  "APPROVAL_NOT_FOUND",
+                  "APPROVAL_EXPIRED",
+                  "APPROVAL_SECRET_REQUIRED",
+                  "ACTION_NOT_FOUND",
+                  "ASSET_NOT_FOUND",
+                  "DECISION_NOT_FOUND",
+                  "CHANGE_REQUEST_NOT_FOUND",
+                  "DECISION_LOCKED",
+                  "VERSION_IMMUTABLE",
+                  "BUDGET_EXCEEDED",
+                  "SHARD_LOCKED",
+                  "ROUTE_CONFLICT",
+                  "ROUTE_GONE",
+                  "INVALID_STATE",
+                  "UNSUPPORTED_TARGET",
+                  "ENDPOINT_NOT_FOUND",
+                  "NO_HANDLER",
+                  "UI_NOT_FOUND"
+                ],
+                "description": "机器可读的错误码。穷举这些值做分支，不要解析 message 的文本。"
+              },
+              "message": {
+                "type": "string",
+                "description": "人类可读说明（中文）。不承载机器语义。"
+              },
+              "approval_id": {
+                "type": "string",
+                "description": "仅 REQUIRE_APPROVAL。被挂起的审批单 id，可拿去 GET /v1/approvals/{id} 单查。"
+              },
+              "parked_at": {
+                "type": "string",
+                "description": "仅 REQUIRE_APPROVAL。挂起的时刻。"
+              },
+              "fingerprint": {
+                "type": "string",
+                "description": "仅 REQUIRE_APPROVAL。请求内容摘要。重试同一请求会得到同一 fingerprint —— 可用它判断「这张是不是我刚才那张」。"
+              },
+              "hits": {
+                "type": "integer",
+                "description": "仅 REQUIRE_APPROVAL。同一请求被重复挂起的次数。> 0 表示你在重试，应当停手。"
+              },
+              "fingerprint_means": {
+                "type": "string",
+                "description": "fingerprint 的解释（给人读）。"
+              },
+              "approval_expires_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "仅 REQUIRE_APPROVAL。带 TTL 的单何时自动关闭（本地时间）；null = 无 TTL，会一直等人裁决。"
+              },
+              "approval_ttl_note": {
+                "type": "string",
+                "description": "仅 REQUIRE_APPROVAL。这张单的 TTL 行为说明（给人读）。"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          },
+          "gate": {
+            "type": "object",
+            "description": "被门控截停时出现。",
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": [
+                  "approval",
+                  "none"
+                ]
+              },
+              "why": {
+                "type": "string",
+                "description": "为什么这条被门控（给人读）。"
+              },
+              "enforced_in": {
+                "type": "string",
+                "description": "强制点在哪里 —— 网关层，不是提示词。"
+              },
+              "parked_in": {
+                "type": "string",
+                "description": "挂起后存在哪里。"
+              },
+              "bypass": {
+                "type": "string",
+                "description": "为什么没有 HTTP 路径可以绕过。"
+              },
+              "approval_secret_required": {
+                "type": "boolean",
+                "description": "裁决是否需要密钥。"
+              }
+            }
+          },
+          "idempotency": {
+            "type": "object",
+            "description": "仅幂等重放时出现。说明这次返回的是首次响应，而不是又执行了一遍。",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "required",
+                  "optional"
+                ],
+                "description": "required=端点强制带键（缺了 400）；optional=带键才生效 —— 不带就没有这层保护。"
+              },
+              "storage_constraint": {
+                "type": "string",
+                "description": "唯一性的物理位置（表主键），不是应用层 if。"
+              },
+              "behaviour": {
+                "type": "string",
+                "description": "重放语义：返回首次响应，不产生第二次副作用。"
+              },
+              "hits": {
+                "type": "integer",
+                "description": "这个键被重发过几次。"
+              },
+              "first_seen_at": {
+                "type": "string"
+              }
+            }
+          },
+          "hints": {
+            "type": "array",
+            "description": "面向 agent 的下一步建议，按受众分组。",
+            "items": {
+              "type": "object",
+              "properties": {
+                "for": {
+                  "type": "string",
+                  "enum": [
+                    "agent",
+                    "user"
+                  ],
+                  "description": "这条建议给谁。"
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "stop_retry",
+                    "observe",
+                    "wait_for_human",
+                    "decide_approval",
+                    "provide_input",
+                    "raise_limit",
+                    "retry_with_idempotency_key",
+                    "use_alternative",
+                    "open_change_request",
+                    "claim_lease",
+                    "continue_other_shards"
+                  ],
+                  "description": "机器可读的下一步语义。agent 应当分支于这个字段，而不是解析 suggest 的自然语言 —— 那是跨语区不稳定的。"
+                },
+                "suggest": {
+                  "type": "string",
+                  "description": "人类可读的建议（中文）。"
+                },
+                "why": {
+                  "type": "string",
+                  "description": "为什么这么建议（给人读）。"
+                }
+              },
+              "required": [
+                "for",
+                "action",
+                "suggest"
+              ]
+            }
+          },
+          "_meta": {
+            "type": "object",
+            "description": "传输层统一补齐：request_id / latency_ms（实测）/ tokens_estimate（真实字节 chars/4）。"
+          }
+        },
+        "required": [
+          "ok",
+          "requires"
+        ]
+      }
+    }
+  },
+  "x-agent-console": {
+    "service": "agent-console",
+    "version": "v6",
+    "engine": "node:http + node:sqlite",
+    "contract_digest": "6d439cbd7c94bf93",
+    "generated_from": "ROUTES × GATE × META —— 现场派生，不落盘、不手写，所以不会与运行中的服务漂移",
+    "process_model": "队列、锁、门控由服务进程持有 —— agent 无法绕过自己做裁判",
+    "requires_model": "x-requires 是数组，列出该端点【可能返回】的全部 requires 值（响应体里的 requires 必是其中之一）。取值：auto=可自行判定 · human=需要人 · agent=需要 agent 补充输入 · human_or_llm=语义判定",
+    "idempotency_model": "safe=读（无副作用） · required=写且必带 Idempotency-Key（缺了直接 400） · optional=写，可选带键：带了就按表主键重放首次响应，不带则不受任何约束（写端点的默认档） · fingerprint_dedup=门控端点：不走业务 handler、没有键机制，但重复请求按内容指纹合并，不会开出第二张待批单",
+    "documents_are_not_operations": "GET /v1/openapi.json 直接返回 OpenAPI 文档本身（不加信封），以免污染文档结构。",
+    "deterministic": "同一份活元数据派生出的文档逐字节相同：没有时间戳，只有 contract_digest。传输统计走响应头（X-Request-Id / X-Latency-Ms / X-Doc-Tokens），不进文档体。",
+    "gate": {
+      "policy": [
+        {
+          "route": "POST /v1/act/:id/confirm",
+          "level": "approval",
+          "why": "确认执行 = 产生费用 + 不可逆副作用"
+        },
+        {
+          "route": "POST /v1/act/confirm",
+          "level": "approval",
+          "why": "同上（兼容 body.action_id 形式）"
+        },
+        {
+          "route": "POST /v1/state/change_requests/:id/approve",
+          "level": "approval",
+          "why": "批准变更 = 改写已锁定的决策 / 资产"
+        }
+      ],
+      "human_surface": [
+        "POST /v1/approvals/:id/decide"
+      ],
+      "decide_endpoint": "POST /v1/approvals/:id/decide",
+      "approval_secret_required": false
+    },
+    "meta_coverage": {
+      "routes": 29,
+      "declared": 29,
+      "missing": [],
+      "extra": [],
+      "note": "missing 非空 = spec 里出现了占位说明，不是静默少写一条"
+    },
+    "duplicate_operation_ids": [],
+    "honesty": [
+      "默认无鉴权：同机任何进程都能裁决待批单。APPROVAL_SECRET 是可选的补救，默认关。",
+      "网关先于业务校验：不存在的 action_id 也会被挂起（回放时才 404），因此理论上可以刷待批队列，真实部署需按请求方限流。",
+      "回放是同步的：长任务会阻塞裁决请求。",
+      "x-idempotency=optional 的写端点需要你带上 Idempotency-Key 才受保护；不带键时没有任何约束 —— 想要确定性就带键，别依赖「重试前先读状态」这条口头纪律。",
+      "审批单默认永不过期（一直等人裁决）。提交时在 body 里带 approval_ttl_s 才有 TTL，到期由服务端自动关闭为 EXPIRED。TTL 不参与指纹计算，所以同一请求带不带 TTL 都是同一张单。"
+    ]
+  }
+}

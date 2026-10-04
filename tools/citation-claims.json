@@ -1,0 +1,61 @@
+[
+  {
+    "name": "R3-①  approval_id = apr_9399f6",
+    "file": "DOUBAO-DELIVERY/多文件版/02_关键证据原文.md",
+    "locator": "被门控时的完整 403 响应",
+    "literal": "apr_9399f6",
+    "expect": "fail",
+    "note": "它称『取自评测包第4节关键证据中 403 响应示例的原文』。403 示例原文的 id 当时是 apr_822943（快照会漂，当前是 apr_27213f）—— 无论哪个快照，apr_9399f6 都不在其中。判据是『在**指定出处文件**里能否逐字命中』——注意交付物现已把这个值作为反面案例写进引用规范段，所以『全部材料』层面已含此串，但那不构成出处。"
+  },
+  {
+    "name": "R3-②  \"bytes\": 929",
+    "file": "DOUBAO-DELIVERY/多文件版/02_关键证据原文.md",
+    "locator": "零知识 agent 的第一次请求",
+    "literal": "\"bytes\": 929",
+    "expect": "fail",
+    "note": "它称『取自评测包第8节零知识 agent 第一次请求示例原文』。该节原文当时是 \"bytes\": 1260（快照会漂，当前是 1259）—— 无论哪个快照，929 都不在其中。同上：929 已作为反面案例出现在规范段，但规范段不是出处。"
+  },
+  {
+    "name": "R3-③  出处「第8节」本身",
+    "file": "DOUBAO-DELIVERY/多文件版/02_关键证据原文.md",
+    "locator": "第8节",
+    "literal": "",
+    "expect": "fail",
+    "note": "材料最高到『第 7 步 + 附 A/B/C』，无第 8 节；且它自己的报告只到第 6 节。→ 出处不存在。"
+  },
+  {
+    "name": "R3-④  引用不存在的文件",
+    "file": "DOUBAO-DELIVERY/多文件版/09_不存在的文件.md",
+    "locator": "",
+    "literal": "x",
+    "expect": "fail",
+    "note": "文件级引用也必须可核。"
+  },
+  {
+    "name": "R3-⑤  403 = 1916 字节（它说对的，应放行）",
+    "file": "DOUBAO-DELIVERY/多文件版/02_关键证据原文.md",
+    "locator": "被门控时的完整 403 响应",
+    "literal": "\"bytes\": 1916",
+    "expect": "pass",
+    "snapshot_bound": true,
+    "note": "第三轮快照下的真值（403 自报体长），落在实测漂移区间 [1916,1917] 内，故判它对。⚠ 本值是**快照绑定**的：证据原文每次重采都会漂（当前快照已变为 2091，approval_id 也从 apr_822943 变为 apr_27213f）。**这是审计记录，不是门禁** —— 日常门禁是不带参数的内置回归，它由 verify-citation.mjs 的 dynamicTruth() **现场派生**真值，不会随快照重采失效。此处保留原值而不改写：改写历史记录等于伪造出处。"
+  },
+  {
+    "name": "R4-①  规范段示例：出处「零知识 agent 的第一次请求」+ 真实 bytes",
+    "file": "DOUBAO-DELIVERY/多文件版/02_关键证据原文.md",
+    "locator": "零知识 agent 的第一次请求",
+    "literal": "\"bytes\": 1259",
+    "expect": "pass",
+    "snapshot_bound": true,
+    "note": "交付物『引用的写法』段用这个例子教人怎么引用 —— 教的格式自己必须先成立。第五轮已把示例值改成**生成时从本次快照派生**（占位符 {{SAMPLE_ROOT_BYTES}}，见 make-doubao-package.mjs），并在写文件前自证「示例值能在本包证据原文里逐字命中」。此处的字面值是当前快照值，随快照重采会漂；日常门禁是内置回归里的 正例③（现场派生）。"
+  },
+  {
+    "name": "R4-②  规范段示例：出处「403 响应」+ 真实 approval_id",
+    "file": "DOUBAO-DELIVERY/多文件版/02_关键证据原文.md",
+    "locator": "被门控时的完整 403 响应",
+    "literal": "apr_27213f",
+    "expect": "pass",
+    "snapshot_bound": true,
+    "note": "同上，第五轮改为生成时派生（占位符 {{SAMPLE_403_ID}}）。规范段里出现的每个具体值，都必须能在它标注的出处文件里逐字命中 —— 现在由生成器在落盘前强制自证，不再靠人记得改。"
+  }
+]

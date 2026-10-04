@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Console 评测包 · 给 AI 评审者的交付</title>
+<style>
+:root{--bg:#fbfbfa;--fg:#1a1a19;--dim:#6b6b68;--line:#e4e4e0;--card:#fff;--accent:#0f766e;--warn:#b45309;--gate:#b91c1c;--code:#f4f4f2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:26px;margin:0 0 6px}
+h2{font-size:19px;margin:44px 0 12px;padding-top:18px;border-top:1px solid var(--line)}
+h3{font-size:15px;margin:22px 0 8px}
+p{margin:10px 0}
+code{font-family:"Cascadia Mono",Consolas,monospace;font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;font-family:"Cascadia Mono",Consolas,monospace;font-size:12.5px;line-height:1.55;max-height:460px}
+.lead{color:var(--dim);margin:0 0 18px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}
+.badge{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;color:var(--dim)}
+.badge b{color:var(--fg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:12px 0}
+.callout{border-left:3px solid var(--accent);background:#f0fdfa}
+.warn{border-left:3px solid var(--warn);background:#fffbeb}
+.gatecall{border-left:3px solid var(--gate);background:#fef2f2}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card)}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:#f6f6f4;font-weight:600;position:sticky;top:0}
+tr.gated{background:#fff7f7}
+td.n{color:var(--dim);text-align:right;width:28px}
+td.params{font-family:Consolas,monospace;font-size:12px;color:var(--dim)}
+td.sum{color:var(--dim)}
+.dim{color:var(--dim)}
+.m{font-weight:600;font-size:11.5px;padding:1px 6px;border-radius:4px}
+.m-get{background:#ecfdf5;color:#047857}.m-post{background:#eff6ff;color:#1d4ed8}.m-put{background:#fef3c7;color:#92400e}
+.tag{font-size:11.5px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.tag.gate{background:#fee2e2;color:#b91c1c;border-color:#fecaca;font-weight:600}
+.req-human{background:#ede9fe;color:#6d28d9}.req-auto{background:#f1f5f9;color:#475569}.req-human_or_llm{background:#fce7f3;color:#be185d}.req-agent{background:#fef3c7;color:#92400e}
+.idem-safe{background:#f1f5f9;color:#475569}.idem-must{background:#eff6ff;color:#1d4ed8}.idem-opt{background:#ecfdf5;color:#047857}.idem-fp{background:#fff7ed;color:#c2410c}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{font-family:Consolas,monospace;font-size:11.5px;background:var(--card);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+a{color:var(--accent)}
+ul{margin:8px 0;padding-left:22px}
+li{margin:5px 0}
+.path{font-family:Consolas,monospace;font-size:12.5px}
+footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+</style>
+</head>
+<body><main>
+
+<h1>Agent Console · 评测包</h1>
+<p class="lead">一个「给 AI agent 用的工作台接口」的交付包。<b>第一用户是 AI，所以评估主体也应该是 AI。</b></p>
+<div class="badges">
+<span class="badge">版本 <b>v6</b></span>
+<span class="badge">路由 <b>29</b></span>
+<span class="badge">门控 <b>3</b></span>
+<span class="badge">error.code <b>24</b> 枚举</span>
+<span class="badge">hints.action <b>11</b> 枚举</span>
+<span class="badge">契约 <b>56227</b> 字节</span>
+<span class="badge">digest <b>6d439cbd7c94bf93</b></span>
+</div>
+
+<div class="card gatecall">
+<p style="margin:0"><b>先抓这一份就能开工：<a href="/start.md">/start.md</a>（开测版）</b><br>
+<span class="dim">它按「你要产出什么」组织：开篇即任务、六个评测维度变成可勾选的检查清单、输出模板变成填空表。
+读完（约 45KB）就能直接动手，不需要再找别的文件。</span></p>
+</div>
+
+<h2>0 · 如果你是 AI，从这里开始</h2>
+<div class="card callout">
+<p><b>你的身份不是「评审员」，而是一个要用这套 HTTP 接口干活的 agent。</b>这两者的结论会差很远。</p>
+<p>人类点按钮式的验收在这个产品上<b>系统性失效</b> —— 但原因不是「界面不够好」，而是：</p>
+<ul>
+<li>人读一句中文就懂了；<b>agent 需要能 <code>if</code> 的枚举</b>，不是需要解读的散文。</li>
+<li>人觉得「一次响应 700 tokens 而已」；<b>agent 的上下文就是预算</b>，每次往返都在扣。</li>
+<li>人「报错了就看看怎么了」；<b>agent 会重试到死</b> —— 除非错误里有明确的停止信号。</li>
+</ul>
+<p style="margin-bottom:0"><b>所以如果你只做静态推演（不执行代码），请在结论里明说。</b>推演与实测的可信度不是一个量级，我需要知道哪条是哪种。</p>
+</div>
+
+<h2>1 · 评测对象</h2>
+<p>一个单文件 Node 后端 + 单文件前端，<b>零 npm 依赖</b>（只用 Node 22.5+ 内置的 <code>node:sqlite</code>）。核心不是页面，是 <code>/v1/*</code> 这组接口，外加一份<b>由运行中的服务现场派生</b>的 OpenAPI 契约（不手写、不落盘，所以不会随代码迭代漂移）。</p>
+<div class="card gatecall"><p style="margin:0"><b>它想解决的一个具体问题：</b>让 agent 在「不该做」的事情上，从「<b>我不该</b>」变成「<b>我不能</b>」。<br><span class="dim">"我不该"写在提示词里，agent 心情好就遵守；"我不能"写在服务端网关里，agent 想绕也没有路径 —— 被门控的端点在 HTTP 层就被截停，请求原样落盘成待审批单，业务代码一行不跑。能跑它的代码只有一行，在「人批准」的回放里。</span></p></div>
+
+<h2>2 · 评什么（六个维度）</h2>
+<div class="grid">
+<div class="card"><h3>① 契约自足性</h3><p>只看契约，能否回答：哪些端点会被门控、原因写清楚没？调用前知道哪些参数必填、哪些写操作要幂等键吗？错误码可穷举吗？<b>有没有「说了会发生、却没说身体长什么样」的地方？</b></p></div>
+<div class="card"><h3>② 错误信息的可操作性</h3><p>403 有没有告诉 agent「<b>别重试</b>」？这个信号是<b>可程序化提取</b>的，还是只能读中文？它指向的下一步端点真的存在吗？伪造请求头或换 method 能绕过吗？</p></div>
+<div class="card"><h3>③ 上下文经济性</h3><p>一次典型任务几次往返？契约本身多重？有没有「为拿一个字段被迫拉一整张表」？返回的东西里多少是给 agent 的、多少是给人界面的？</p></div>
+<div class="card"><h3>④ 行为可预测性</h3><p>重试同一请求会不会重复开单、重复扣钱？并发两次会不会都成功（双扣）？拿到一个 id 能不能 O(1) 查到，而不是拉全表过滤？</p></div>
+<div class="card"><h3>⑤ 收敛性</h3><p>被挂起后，能否明确知道「现在该人接手了，我不该再动」？人处理完能否查到<b>明确终态</b>而非反复轮询？有没有永远等不到的状态（死等）？</p></div>
+<div class="card"><h3>⑥ 自举成本</h3><p>零知识 agent 从「只知道一个 base URL」到「知道该干什么」要几次往返？第一发会不会被 82KB 的 HTML 糊一脸？</p></div>
+</div>
+
+<h2>3 · 已知边界：这些<b>不是 bug</b>，别当缺陷报</h2>
+<p>这个项目有一条原则叫<b>「降级诚实」</b> —— 不确定的写清楚，做不到的标出来。下面这些是<b>故意</b>的，可以讨论，但不要当漏洞报：</p>
+<div class="card warn"><ol>
+<li><b>默认无鉴权</b>：同机任何进程都能调裁决端点。这是「本机单人工具」的前提。补救开关存在（设 <code>APPROVAL_SECRET</code>），默认关。</li>
+<li><b>网关先于业务校验</b>：不存在的 <code>action_id</code> 也会被挂起（回放时才 404）。理论上 agent 可以刷待批队列。<b>真实部署需按请求方限流 —— 这是已知缺口。</b></li>
+<li><b>写端点的默认幂等档是可选的，不是强制</b>：契约里<b>如实</b>写成「safe=读（无副作用） · required=写且必带 Idempotency-Key（缺了直接 400） · optional=写，可选带键：带了就按表主键重放首次响应，不带则不受任何约束（写端点的默认档） · fingerprint_dedup=门控端点：不走业务 handler、没有键机制，但重复请求按内容指纹合并，不会开出第二张待批单」（实测分布 <code>safe</code> 13 / <code>required</code> 1 / <code>optional</code> 12 / <code>fingerprint_dedup</code> 3）。<b>带上 <code>Idempotency-Key</code> 就重放首次响应，不带则不受任何约束。</b>这是已声明的取舍，不是设计选择。</li>
+<li><b>回放是同步的</b>：长任务会阻塞裁决请求。</li>
+<li><b>前端有一份离线 mock</b>：后端没开时页面降级为浏览器内模拟，降级时它<b>如实写在页脚</b>「闸门守的是本页内存」，不假装还在守。</li>
+</ol></div>
+<p>如果你发现<b>已知边界之外</b>的问题，那才是我想要的东西。如果你发现上面某条「其实比写的更严重」，也请说 —— 那是我的诚实标注不够诚实。</p>
+
+<h2>4 · 关键证据：被门控时的完整 403 响应</h2>
+<p>场景：agent 试图执行一个「产生费用 + 不可逆副作用」的动作，被网关截停。<b>请逐字段读，然后问自己：只拿到这个，我知不知道下一步该干什么？</b></p>
+<pre>{
+  "_note": "★ 最重要的一份：agent 调用一个被门控的端点时，真实拿到的完整响应。注意 hints[].action —— 那是给 agent 做分支的机器语义（ASCII 枚举），suggest/why 是给人读的散文。两者分开，是因为跨语区模型对中文原文没有稳定的解析契约。",
+  "_volatile": {
+    "note": "注意 error.approval_id 每次都不同（每次撞门控都会新挂一张单），hints 里嵌了该 id 的 suggest 文字同理。 本响应含「运行态字段」（见下面 fields）：它们随服务运行状态变化，所以上面的 bytes 只是某一次采样的瞬间值，会跟着漂移。核对时请先屏蔽这些路径，再比对语义部分。",
+    "fields": [
+      "_meta.budget.reserved",
+      "_meta.budget.used",
+      "_meta.latency_ms",
+      "_meta.request_id",
+      "_meta.tokens_estimate",
+      "error.approval_id",
+      "error.fingerprint",
+      "error.parked_at",
+      "hints[1].suggest",
+      "hints[2].suggest"
+    ],
+    "detected_by": {
+      "double-probe": [
+        "_meta.budget.reserved",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "error.approval_id",
+        "error.fingerprint",
+        "error.parked_at",
+        "hints[1].suggest",
+        "hints[2].suggest"
+      ],
+      "name-pattern": [
+        "_meta.budget.reserved",
+        "_meta.budget.used",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "_meta.tokens_estimate",
+        "error.parked_at"
+      ]
+    },
+    "bytes_observed": [
+      2091,
+      2091
+    ],
+    "bytes_note": "bytes 是第 1 次采样的瞬间值。两次采样相同，不等于它不会变 —— 真正的驱动是上面 fields 里的字段（尤其 _meta.budget.reserved/used）：它们一改，整份响应的字节数就跟着改。不要把 bytes 当成可复现的事实去核对。"
+  },
+  "request": {
+    "method": "POST",
+    "path": "/v1/act/{id}/confirm",
+    "body": {}
+  },
+  "status": 403,
+  "content_type": "application/json; charset=utf-8",
+  "bytes": 2091,
+  "body": {
+    "ok": false,
+    "requires": "human",
+    "error": {
+      "code": "REQUIRE_APPROVAL",
+      "message": "该操作不在 agent 的授权范围内。请求已原样挂起，等待人工裁决，未执行。",
+      "approval_id": "apr_27213f",
+      "parked_at": "2026-10-03 21:58:04",
+      "fingerprint": "51ec7e4c60b59b74ac9936f1d979d31e",
+      "hits": 0,
+      "fingerprint_means": "这张单子的内容摘要 —— 人批的是它，批完服务端回放的就是它，中间改不了",
+      "approval_expires_at": null,
+      "approval_ttl_note": "这张单没有 TTL：会一直等人裁决。想让它自己过期，重发时在 body 里带上 approval_ttl_s"
+    },
+    "gate": {
+      "level": "approval",
+      "why": "确认执行 = 产生费用 + 不可逆副作用",
+      "enforced_in": "server process（网关层，非提示词）",
+      "parked_in": "approvals 表 · SQLite",
+      "bypass": "没有 HTTP 路径可绕过：该 handler 只从审批回放中被调用",
+      "approval_secret_required": false
+    },
+    "hints": [
+      {
+        "for": "agent",
+        "action": "stop_retry",
+        "suggest": "停止重试，继续处理其他未阻塞分片",
+        "why": "重试不会让它执行，只会白烧上下文"
+      },
+      {
+        "for": "agent",
+        "action": "observe",
+        "suggest": "GET /v1/approvals/apr_27213f 单查这一张（或 GET /v1/approvals?status=PENDING 看全部）",
+        "why": "可见即可观测，但可见性不构成权限"
+      },
+      {
+        "for": "user",
+        "action": "decide_approval",
+        "suggest": "在待审批面板批准或驳回 apr_27213f",
+        "why": "这是该端点唯一的执行入口"
+      }
+    ],
+    "_meta": {
+      "request_id": "req_9ffe1d5b",
+      "latency_ms": 3.33,
+      "tokens_estimate": 254,
+      "tokens_note": "真实响应体的 chars/4 估算，非模拟值",
+      "engine": "node:http + node:sqlite",
+      "gate_enforced_at": "server process",
+      "budget": {
+        "limit": 50,
+        "used": 12.4,
+        "reserved": 0.42
+      },
+      "note": "403 而不是 202：202 暗示「稍后回来查」，而这里的正确动作是走开"
+    }
+  }
+}</pre>
+
+<h2>5 · 路由总表（29 条，从活元数据派生）</h2>
+<p class="dim">列含义：<code>gate</code>=授权轴（非 none 即网关截停，403，业务代码一行不跑）；<code>requires</code>=裁决轴（结果谁来定，多值用 / 分隔表示可能返回其中之一）；<code>幂等</code>=四档 <code>safe</code> 读 / <code>required</code> 必带键 / <code>optional</code> 可选带键（带即重放，不带不受约束） / <code>fingerprint_dedup</code> 门控端点按内容指纹去重。参数带 <code>*</code> 为必填。</p>
+<div style="max-height:620px;overflow:auto;border:1px solid var(--line);border-radius:8px">
+<table><thead><tr><th>#</th><th>方法</th><th>路径</th><th>gate</th><th>requires</th><th>幂等</th><th>参数</th><th>说明</th></tr></thead>
+<tbody>
+<tr class="">
+<td class="n">1</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/health</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">存活探测 + 契约声明：路由表、门控策略、裁决密钥状态</td></tr>
+<tr class="">
+<td class="n">2</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/openapi.json</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">本文件</td></tr>
+<tr class="">
+<td class="n">3</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/state/bundle</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">一次往返取回整个 UI 所需状态（预算/决策/资产/快照/队列/租约/审计/待批）</td></tr>
+<tr class="">
+<td class="n">4</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/state/project</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">项目快照、进度、未决问题</td></tr>
+<tr class="">
+<td class="n">5</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/state/decisions</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">include_superseded</td><td class="sum">immutable 决策记录</td></tr>
+<tr class="">
+<td class="n">6</td><td><span class="m m-put">PUT</span></td>
+<td><code>/v1/state/decisions</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">写决策</td></tr>
+<tr class="">
+<td class="n">7</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/state/checkpoint</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">断点续跑位置</td></tr>
+<tr class="">
+<td class="n">8</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/state/assets</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">资产及全部历史版本</td></tr>
+<tr class="">
+<td class="n">9</td><td><span class="m m-put">PUT</span></td>
+<td><code>/v1/state/assets</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">默认基于当前版本开新版本；显式指定 target_version 改历史版本 → 409 VERSION_IMMUTABLE</td></tr>
+<tr class="">
+<td class="n">10</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/state/change_requests</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">status</td><td class="sum">变更请求清单</td></tr>
+<tr class="">
+<td class="n">11</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/state/change_requests</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">agent 想改锁定项时的正式入口，返回 approve 端点</td></tr>
+<tr class="gated">
+<td class="n">12</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/state/change_requests/{id}/approve</code></td>
+<td><span class="tag gate">approval</span></td>
+<td><span class="tag req-human">human</span></td>
+<td><span class="tag idem-fp">fingerprint_dedup</span></td>
+<td class="params">id*</td><td class="sum">人类批准变更：旧记录标 superseded、新记录链上 previous_id（不是原地改写不可变记录）</td></tr>
+<tr class="">
+<td class="n">13</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/senses/measure</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto / human</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">规则化客观检测</td></tr>
+<tr class="">
+<td class="n">14</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/senses/transcribe</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">ASR 转写，返回带时间轴的 segments[]，供 agent 定位问题片段</td></tr>
+<tr class="">
+<td class="n">15</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/senses/judge</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-human_or_llm">human_or_llm</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">语义判定专用端点</td></tr>
+<tr class="">
+<td class="n">16</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/senses/diff</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">from to</td><td class="sum">只返回变化的字段，unchanged_count 汇总未变项</td></tr>
+<tr class="">
+<td class="n">17</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/act/queue</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto / human</span></td>
+<td><span class="tag idem-must">required</span></td>
+<td class="params">Idempotency-Key*</td><td class="sum">入队</td></tr>
+<tr class="">
+<td class="n">18</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/act/lease</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">分片租约</td></tr>
+<tr class="">
+<td class="n">19</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/act/leases</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">—</td><td class="sum">活跃租约及剩余 TTL（TTL 由服务端时钟仲裁）</td></tr>
+<tr class="gated">
+<td class="n">20</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/act/{id}/confirm</code></td>
+<td><span class="tag gate">approval</span></td>
+<td><span class="tag req-human">human</span></td>
+<td><span class="tag idem-fp">fingerprint_dedup</span></td>
+<td class="params">id*</td><td class="sum">把 PENDING_CONFIRMATION 推进为 EXECUTED</td></tr>
+<tr class="">
+<td class="n">21</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/act/{id}/rollback</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">id*</td><td class="sum">把已执行动作标为 ROLLED_BACK，退回预算并记录补偿</td></tr>
+<tr class="">
+<td class="n">22</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/audit</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">limit</td><td class="sum">actor / verb / target / result / request_id 时间线</td></tr>
+<tr class="">
+<td class="n">23</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/approvals</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">status</td><td class="sum">被网关拦下的请求清单</td></tr>
+<tr class="">
+<td class="n">24</td><td><span class="m m-get">GET</span></td>
+<td><code>/v1/approvals/{id}</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-human_or_llm">human_or_llm</span></td>
+<td><span class="tag idem-safe">safe</span></td>
+<td class="params">id*</td><td class="sum">单查一张审批单</td></tr>
+<tr class="">
+<td class="n">25</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/approvals/{id}/decide</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-human">human</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">id*</td><td class="sum">门控端点唯一的执行入口</td></tr>
+<tr class="">
+<td class="n">26</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/demo/push_budget</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">演示用：把已用预算推到指定值</td></tr>
+<tr class="">
+<td class="n">27</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/demo/reset</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">演示用：重置到种子状态</td></tr>
+<tr class="gated">
+<td class="n">28</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/act/confirm</code></td>
+<td><span class="tag gate">approval</span></td>
+<td><span class="tag req-human">human</span></td>
+<td><span class="tag idem-fp">fingerprint_dedup</span></td>
+<td class="params">—</td><td class="sum">（兼容别名）等价于 POST /v1/act/{id}/confirm，动作 id 放在 body 里</td></tr>
+<tr class="">
+<td class="n">29</td><td><span class="m m-post">POST</span></td>
+<td><code>/v1/act/rollback</code></td>
+<td><span class="dim">—</span></td>
+<td><span class="tag req-auto">auto</span></td>
+<td><span class="tag idem-opt">optional</span></td>
+<td class="params">—</td><td class="sum">（兼容别名）等价于 POST /v1/act/{id}/rollback，动作 id 放在 body 里</td></tr>
+</tbody></table></div>
+
+<h3>门控策略原文（为什么这几个要被拦）</h3>
+<ul><li><code>POST /v1/act/:id/confirm</code> → <span class="tag gate">approval</span>：确认执行 = 产生费用 + 不可逆副作用</li><li><code>POST /v1/act/confirm</code> → <span class="tag gate">approval</span>：同上（兼容 body.action_id 形式）</li><li><code>POST /v1/state/change_requests/:id/approve</code> → <span class="tag gate">approval</span>：批准变更 = 改写已锁定的决策 / 资产</li></ul>
+
+<h2>6 · 两个枚举词表</h2>
+<p><b>这是这个产品对 agent 最有价值的部分。</b>关键指令押注在自然语言上是缺陷：「停止重试」这四个字对跨语区模型没有稳定的解析契约 —— 换个模型、换个语区，分支就可能走错，代价是白烧上下文。</p>
+<h3><code>error.code</code>（24 项，可穷举分支）</h3>
+<div class="chips"><span class="chip">INVALID_JSON</span><span class="chip">INVALID_BODY</span><span class="chip">IDEMPOTENCY_KEY_REQUIRED</span><span class="chip">IDEMPOTENCY_KEY_CONFLICT</span><span class="chip">REQUIRE_APPROVAL</span><span class="chip">ALREADY_DECIDED</span><span class="chip">APPROVAL_NOT_FOUND</span><span class="chip">APPROVAL_EXPIRED</span><span class="chip">APPROVAL_SECRET_REQUIRED</span><span class="chip">ACTION_NOT_FOUND</span><span class="chip">ASSET_NOT_FOUND</span><span class="chip">DECISION_NOT_FOUND</span><span class="chip">CHANGE_REQUEST_NOT_FOUND</span><span class="chip">DECISION_LOCKED</span><span class="chip">VERSION_IMMUTABLE</span><span class="chip">BUDGET_EXCEEDED</span><span class="chip">SHARD_LOCKED</span><span class="chip">ROUTE_CONFLICT</span><span class="chip">ROUTE_GONE</span><span class="chip">INVALID_STATE</span><span class="chip">UNSUPPORTED_TARGET</span><span class="chip">ENDPOINT_NOT_FOUND</span><span class="chip">NO_HANDLER</span><span class="chip">UI_NOT_FOUND</span></div>
+<h3><code>hints[].action</code>（11 项，给 agent 做 <code>if</code> 的机器词表）</h3>
+<div class="chips"><span class="chip">stop_retry</span><span class="chip">observe</span><span class="chip">wait_for_human</span><span class="chip">decide_approval</span><span class="chip">provide_input</span><span class="chip">raise_limit</span><span class="chip">retry_with_idempotency_key</span><span class="chip">use_alternative</span><span class="chip">open_change_request</span><span class="chip">claim_lease</span><span class="chip">continue_other_shards</span></div>
+<p class="dim">配套机制：传输层对 <code>action</code> 做运行时校验，任何不在词表内的值会在响应里现形（<code>_meta.hint_action_violation</code>）；测试层断言它恒为空 —— 否则将来谁加了 hint 忘了 action，契约的 enum 就会比现实少一个值。</p>
+
+<h2>7 · 原始文件（要全文就抓这些）</h2>
+<table><thead><tr><th>路径</th><th>字节</th><th>内容</th></tr></thead><tbody>
+<tr><td class="path"><a href="/start.md">/start.md</a></td><td>46234</td><td>★★ 开测版：以产出为组织单位（开篇即任务、六维变可勾选清单、模板变填空表）—— &lt;b&gt;首选入口&lt;/b&gt;</td></tr><tr><td class="path"><a href="/pkg.md">/pkg.md</a></td><td>129172</td><td>全量纯文本评测包（含契约全文）—— 要完整材料时用</td></tr><tr><td class="path"><a href="/pkg-lite.md">/pkg-lite.md</a></td><td>72118</td><td>精简版（不含契约全文），防抓取被截断</td></tr><tr><td class="path"><a href="/prompt.txt">/prompt.txt</a></td><td>2891</td><td>短提示词：只能粘贴文字时用</td></tr><tr><td class="path"><a href="/openapi.json">/openapi.json</a></td><td>56227</td><td>完整 OpenAPI 契约（唯一 schema 是 Envelope）</td></tr><tr><td class="path"><a href="/files/00_先读我.md">/files/00_先读我.md</a></td><td>1737</td><td>先读我</td></tr><tr><td class="path"><a href="/files/01_评测任务书.md">/files/01_评测任务书.md</a></td><td>8695</td><td>评测任务书</td></tr><tr><td class="path"><a href="/files/02_关键证据原文.md">/files/02_关键证据原文.md</a></td><td>20926</td><td>关键证据原文</td></tr><tr><td class="path"><a href="/files/03_契约速查表.md">/files/03_契约速查表.md</a></td><td>10534</td><td>契约速查表</td></tr><tr><td class="path"><a href="/files/04_背景简报.md">/files/04_背景简报.md</a></td><td>23862</td><td>背景简报</td></tr><tr><td class="path"><a href="/files/05_输出模板.md">/files/05_输出模板.md</a></td><td>4175</td><td>输出模板</td></tr>
+</tbody></table>
+<p><b>推荐抓取次序：</b><code>/start.md</code>（<b>开测版，首选</b> —— 按产出组织，读完即可开工）→ 要完整原始材料则 <code>/pkg.md</code>（全量含契约全文）→ 若嫌大则 <code>/pkg-lite.md</code>（不含契约全文）→ 需要精确契约结构则 <code>/openapi.json</code>。<br>
+能只粘贴文字时用 <code>/prompt.txt</code>（2.4KB，含完整评测立场与要求）。</p>
+
+<h2>8 · 另外两段证据</h2>
+<h3>零知识 agent 的第一次请求 <code>GET /</code></h3>
+<p class="dim">一个只知道 base URL 的 agent 第一发就是这里。注意它<b>没有</b>被 82KB 的 HTML 糊一脸。</p>
+<pre>{
+  "_note": "一个零知识 agent 打 GET / 时拿到的。请求带 Accept: */*（与 fetch / curl 的默认值一致）—— 实际发的请求头见 _request_headers。内容协商：只有明确偏好 text/html 才给页面，否则给这份机器可读索引。",
+  "_request_headers": {
+    "accept": "*/*"
+  },
+  "_volatile": {
+    "note": "本响应含「运行态字段」（见下面 fields）：它们随服务运行状态变化，所以上面的 bytes 只是某一次采样的瞬间值，会跟着漂移。核对时请先屏蔽这些路径，再比对语义部分。",
+    "fields": [
+      "_meta.budget.reserved",
+      "_meta.budget.used",
+      "_meta.latency_ms",
+      "_meta.request_id",
+      "_meta.tokens_estimate"
+    ],
+    "detected_by": {
+      "double-probe": [
+        "_meta.latency_ms",
+        "_meta.request_id"
+      ],
+      "name-pattern": [
+        "_meta.budget.reserved",
+        "_meta.budget.used",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "_meta.tokens_estimate"
+      ]
+    },
+    "bytes_observed": [
+      1259,
+      1260
+    ],
+    "bytes_note": "bytes 是第 1 次采样的瞬间值。两次采样相同，不等于它不会变 —— 真正的驱动是上面 fields 里的字段（尤其 _meta.budget.reserved/used）：它们一改，整份响应的字节数就跟着改。不要把 bytes 当成可复现的事实去核对。"
+  },
+  "status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "bytes": 1259,
+  "body": {
+    "ok": true,
+    "requires": "auto",
+    "data": {
+      "kind": "agent-index",
+      "service": "agent-console",
+      "version": "v6",
+      "note": "你的 Accept 没偏好 text/html，所以给你机器可读的索引，而不是 82KB 的 HTML。",
+      "contract": {
+        "url": "/v1/openapi.json",
+        "type": "application/openapi+json",
+        "why": "先读它，别读文档：它由运行中的路由表 × 门控策略 × 语义登记现场派生，不会漂移。"
+      },
+      "health": "/v1/health",
+      "bundle": "/v1/state/bundle",
+      "start_here": [
+        "GET /v1/health —— 端点清单与运行态",
+        "GET /v1/openapi.json —— 契约（含 x-gate / x-requires / x-idempotency）",
+        "GET /v1/state/bundle —— 一次拿全状态，省往返"
+      ],
+      "gotcha": "动手前先看 x-gate：被门控的端点直接调会 403，请求会被挂起等人裁决，重试不会让它执行。"
+    },
+    "_meta": {
+      "request_id": "req_1c7f59b4",
+      "latency_ms": 0.1,
+      "tokens_estimate": 136,
+      "tokens_note": "真实响应体的 chars/4 估算，非模拟值",
+      "engine": "node:http + node:sqlite",
+      "gate_enforced_at": "server process",
+      "budget": {
+        "limit": 50,
+        "used": 12.4,
+        "reserved": 0
+      }
+    }
+  }
+}</pre>
+<h3>单查审批单 <code>GET /v1/approvals/{id}</code></h3>
+<p class="dim">注意 <code>requires</code> 随状态变：还挂着时是 <code>human</code>，裁决后转 <code>auto</code>。这是「拿到 approval_id 后 O(1) 查自己那张单子」的端点（改前不存在，只能拉全表 O(n) 自己过滤）。</p>
+<pre>{
+  "_note": "agent 手握 approval_id 后的 O(1) 查询路径。注意 requires 随状态变：还挂着时是 human（谁说了算在人），裁决后转 auto。next_step 是结构化字段，不是散文。",
+  "_volatile": {
+    "note": "本响应含「运行态字段」（见下面 fields）：它们随服务运行状态变化，所以上面的 bytes 只是某一次采样的瞬间值，会跟着漂移。核对时请先屏蔽这些路径，再比对语义部分。",
+    "fields": [
+      "_meta.budget.reserved",
+      "_meta.budget.used",
+      "_meta.latency_ms",
+      "_meta.request_id",
+      "_meta.tokens_estimate",
+      "data.created_at"
+    ],
+    "detected_by": {
+      "double-probe": [
+        "_meta.latency_ms",
+        "_meta.request_id"
+      ],
+      "name-pattern": [
+        "_meta.budget.reserved",
+        "_meta.budget.used",
+        "_meta.latency_ms",
+        "_meta.request_id",
+        "_meta.tokens_estimate",
+        "data.created_at"
+      ]
+    },
+    "bytes_observed": [
+      1911,
+      1911
+    ],
+    "bytes_note": "bytes 是第 1 次采样的瞬间值。两次采样相同，不等于它不会变 —— 真正的驱动是上面 fields 里的字段（尤其 _meta.budget.reserved/used）：它们一改，整份响应的字节数就跟着改。不要把 bytes 当成可复现的事实去核对。"
+  },
+  "status": 200,
+  "bytes": 1911,
+  "body": {
+    "ok": true,
+    "requires": "human",
+    "data": {
+      "id": "apr_27213f",
+      "status": "PENDING",
+      "requested_by": "agent",
+      "created_at": "2026-10-03 21:58:04",
+      "request": {
+        "method": "POST",
+        "route": "/v1/act/:id/confirm",
+        "params": {
+          "id": "act_e57d55"
+        },
+        "body": {},
+        "idempotency_key": null
+      },
+      "fingerprint": "51ec7e4c60b59b74ac9936f1d979d31e",
+      "fingerprint_note": "sha256(method␀route␀params␀body) 前 32 位 —— 不含幂等键、也不含 approval_ttl_s：键和寿命都改不了「这是哪件事」",
+      "hits": 0,
+      "expires_at": null,
+      "ttl_s": null,
+      "ttl_note": "这张单没有 TTL —— 会一直等人裁决，不会自己过期",
+      "decided_by": null,
+      "decided_at": null,
+      "reason": null,
+      "replay": null,
+      "decide_endpoint": "POST /v1/approvals/apr_27213f/decide",
+      "pending": true,
+      "who_can_advance": "human",
+      "next_step": {
+        "human": "POST /v1/approvals/apr_27213f/decide {decision: approve|reject}",
+        "agent": "wait —— 可见性不构成权限，重发原请求不会推进它"
+      }
+    },
+    "hints": [
+      {
+        "for": "agent",
+        "action": "wait_for_human",
+        "suggest": "等待人工裁决。不要轮询，也不要重发原请求",
+        "why": "唯一能推进它的动作是人 —— 轮询和重发都只会白烧上下文"
+      },
+      {
+        "for": "user",
+        "action": "decide_approval",
+        "suggest": "批准或驳回 apr_27213f",
+        "why": "这是该端点唯一的执行入口"
+      }
+    ],
+    "_meta": {
+      "request_id": "req_93d55bc8",
+      "latency_ms": 0.52,
+      "tokens_estimate": 248,
+      "tokens_note": "真实响应体的 chars/4 估算，非模拟值",
+      "engine": "node:http + node:sqlite",
+      "gate_enforced_at": "server process",
+      "budget": {
+        "limit": 50,
+        "used": 12.4,
+        "reserved": 0.84
+      }
+    }
+  }
+}</pre>
+
+<h2>9 · 输出要求</h2>
+<div class="card callout"><ol>
+<li><b>你能独立复现的数据</b>（跑了什么、看到什么），不要只有结论。</li>
+<li><b>每个问题附证据</b>：哪个端点、哪个字段、什么响应片段（贴原文，不要转述）。「我觉得不太好用」没有用。</li>
+<li><b>区分「设计选择」和「缺陷」</b>，严重度用 <code>blocker</code>（走不通）/ <code>friction</code>（走得通但代价大）/ <code>nit</code>三级。</li>
+<li><b>声明你的评估条件</b>：执行过代码吗？如果没有，请明说是静态推演。</li>
+<li><b>写「我怀疑但没验证的」</b> —— 这一块比十条泛泛的表扬有用得多。</li>
+</ol></div>
+<p><b>我最想要的输出：设计出我自己没覆盖到的 agent 任务，并在其中找出摩擦点。</b>我写的测评脚本只证明「我修的那三处真的修好了」，证明不了「没有别的问题」。</p>
+
+<footer>
+契约来源：运行中的服务现场派生（原始字节，未重排）· <b>已核对</b>：与当前运行中的服务一致（<code>6d439cbd7c94bf93</code>）<br>
+页面上所有路由、枚举、门控策略均由 <code>ROUTES × GATE × META</code> 派生，非手抄。<br>
+本站由 <code>tools/make-doubao-site.mjs</code> 从 <code>DOUBAO-DELIVERY/</code> 派生 —— 单一数据源，站点与文件包内容不会漂移。
+</footer>
+</main></body></html>

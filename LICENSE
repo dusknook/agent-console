@@ -1,0 +1,64 @@
+# Licensing scope · 许可范围
+
+本仓库内容分三类，适用不同许可。**请勿把三者混为一谈。**
+
+## 1. 代码 —— MIT
+
+Project-owned software code is licensed under the MIT License below. This includes source code,
+scripts, configuration, and the code portions of generated bundles:
+
+`server.js`、`ai-workbench.html`、`tests/`、`tools/`、`smoke-*.mjs`、`acceptance*.mjs`、
+`agent-trial.mjs`、`run-tests.sh`、`video/src/`、`video/render.mjs`、`video/make-bgm.py`、
+`video/tools/`、`video/page.html`、`video/assets/build-assets.py`
+
+## 2. 美术素材 —— 不适用 MIT，禁止商用
+
+Artwork, character designs, backgrounds, button graphics, decorative assets, images, icons,
+previews, and their embedded or transformed copies are excluded from MIT. Copyright remains with
+the respective rights holders, including original character artists and Small-tailqwq for their
+respective contributions. **Artwork includes AI-generated and AI-assisted images. No commercial use
+of the artwork is licensed by this repository.** Existing artwork permissions and attribution
+requirements remain in effect; see each asset's `NOTICE` and `LICENSE-ARTWORK`. Bundling artwork
+into source code, CSS, data URLs, or `lib/` does not change its license.
+
+范围包含但不限于：`video/assets/characters/`、`video/assets/raw/`、`角色定妆板_AI的自白.jpg`、
+以及 `video/assets-data.js` 中的内嵌图像，和**成片视频中的画面**。
+
+逐份声明见：
+- `video/assets/characters/LICENSE.txt`
+- `video/assets/raw/gh/dl/LICENSE_dsh-deep-whale.txt`
+
+## 3. 文稿与报告 —— 保留权利，禁止商用
+
+剧本、体检报告、评测简报等文本内容（`视频剧本_*.md`、`视频体检报告*.md`、`EVAL-PACKAGE/`、
+`DOUBAO-DELIVERY/`、`同步核验报告_*.md`）版权归 Small-tailqwq 所有，未经许可不得商用。
+
+## 4. 第三方材料
+
+Third-party materials and contributions retain their applicable notices and licenses unless their
+rights holders authorize MIT licensing. This notice does not revoke permissions already granted for
+previously distributed versions.
+
+---
+
+MIT License
+
+Copyright (c) 2026 Small-tailqwq
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
